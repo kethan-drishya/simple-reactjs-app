@@ -9,35 +9,14 @@ env:
   AWS_REGION: "us-west-2"
   APP_ID: "d2vgwrednvfl6a" 
   PACKAGE_NAME: "build2"
-  # aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  # aws-region: ${{ env.AWS_REGION }}
-
-  # ----------- Config for Unit Testing -----------
-  # PYTHONPATH: "/home/runner/work/artisan-pid-parser/artisan-pid-parser"
-  # DO_NOT_USE_BOTO3_LOGS: true
-  # DO_NOT_USE_ASM: true
-  # # Dummy Secret Key and Auth token
-  # JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-  # AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+ 
 on:
   push:
     branches: ["main"]
-# permissions:
-#       contents: write
-#       pull-requests: write
     
 jobs:
   ci-pipeline:
     runs-on: [ubuntu-latest]
-    # container: docker://dvcorg/cml-py3:latest
-    # env:
-    #       repo_token: ${{ secrets.REPO_TOKEN }}
-    #       repo_name: ${{ github.event.repository.name }}
-    strategy:
-      matrix:
-        node-version: [16.x]
-
     steps:
       - name: Checkout branch
         uses: actions/checkout@v3
@@ -45,7 +24,7 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 16
 
       - name: Run Build
       - run: npm run build --if-present
