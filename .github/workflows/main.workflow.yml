@@ -87,9 +87,9 @@ jobs:
       - name: Deploy the new application version
         run: |
           aws amplify start-deployment
-          --app-id $APP_ID
-          --branch-name manual
-          --source-url s3://$AMPLIFY_PACKAGE_S3_BUCKET_NAME/$AMPLIFY_PACKAGE_S3_BUCKET_KEY/build.zip
+            --app-id $APP_ID
+            --branch-name manual
+            --source-url s3://$AMPLIFY_PACKAGE_S3_BUCKET_NAME/$AMPLIFY_PACKAGE_S3_BUCKET_KEY/build.zip
       - name: Completion Message
         run: echo "CD Pipeline completed"
       # - name: create repo
