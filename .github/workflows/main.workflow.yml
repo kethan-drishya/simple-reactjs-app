@@ -41,7 +41,7 @@ jobs:
           echo ::set-output name=DEPLOY_PACKAGE_NAME::${{steps.branch_name.outputs.SOURCE_TAG}}.zip
     
       - name: Create Zip Deployment Package
-        run: zip -r -j ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} * -x *.git*
+        run: zip -r -j ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} build/ -x *.git*
 
 
       - name: Configure AWS Credentials
