@@ -2,12 +2,13 @@
 
 name: CI-CD-Pipeline-to-AWS-ElasticBeanstalk-For-UAT
 env:
-  AMPLIFY_PACKAGE_S3_BUCKET_NAME: "hipvap-lambda-test"
+  AMPLIFY_PACKAGE_S3_BUCKET_NAME: "amplify-manual-deploy-trail"
   AMPLIFY_PACKAGE_S3_BUCKET_KEY: "manual_deploy_test"
   AMPLIFY_APPLICATION_NAME: "trail_manual_deploy"
   AMPLIFY_ENVIRONMENT_NAME: "artisan-uat-pid-parser-standard-AMPLIFYs"
   AWS_REGION: "us-west-2"
   APP_ID: "d2vgwrednvfl6a" 
+  PACKAGE_NAME: "build2"
   # aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
   # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   # aws-region: ${{ env.AWS_REGION }}
@@ -27,30 +28,55 @@ on:
 #       pull-requests: write
     
 jobs:
-  # ci-pipeline:
-  #   runs-on: [ubuntu-latest]
+  ci-pipeline:
+    runs-on: [ubuntu-latest]
     # container: docker://dvcorg/cml-py3:latest
     # env:
     #       repo_token: ${{ secrets.REPO_TOKEN }}
     #       repo_name: ${{ github.event.repository.name }}
-          
+    strategy:
+      matrix:
+        node-version: [16.x]
 
-    # steps:
-      # - name: Create Zip Deployment Package
-      #   run: zip -r ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} ./ -x *.git*
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
 
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ env.AWS_REGION }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
 
-      # - name: Copy Deployment Package to AWS S3
-      #   run: aws s3 cp ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} s3://${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}/
+      - name: Run Build
+      - run: npm run build --if-present
 
-      # - name: Completion Message
-      #   run: echo "CI Pipeline completed"
+      - name: Extracting Branch and Tag Names
+      id: branch_name
+      run: |
+        echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+        echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+        echo ::set-output name=SOURCE_TAG::$PACKAGE_NAME
+
+      - name: Preparing deployment package name
+        id: package_name
+        run: |
+          echo ::set-output name=DEPLOY_PACKAGE_NAME::${{steps.branch_name.outputs.SOURCE_TAG}}.zip
+    
+      - name: Create Zip Deployment Package
+        run: zip -r ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} build/ -x *.git*
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Copy Deployment Package to AWS S3
+        run: aws s3 cp ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} s3://${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}
+
+      - name: Completion Message
+        run: echo "CI Pipeline completed"
 
   cd-pipeline:
     runs-on: ubuntu-latest
@@ -89,7 +115,7 @@ jobs:
           aws amplify start-deployment \
             --app-id $APP_ID \
             --branch-name manual \
-            --source-url s3://amplify-manual-deploy-trail/build.zip 
+            --source-url s3://${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}/$PACKAGE_NAME.zip 
       - name: Completion Message
         run: echo "CD Pipeline completed"
       # - name: create repo
