@@ -1,0 +1,185 @@
+# @format
+
+name: CI-CD-Pipeline-to-AWS-ElasticBeanstalk-For-UAT
+env:
+  AMPLIFY_PACKAGE_S3_BUCKET_NAME: "hipvap-lambda-test"
+  AMPLIFY_PACKAGE_S3_BUCKET_KEY: "manual_deploy_test"
+  AMPLIFY_APPLICATION_NAME: "trail_manual_deploy"
+  AMPLIFY_ENVIRONMENT_NAME: "artisan-uat-pid-parser-standard-AMPLIFYs"
+  AWS_REGION: "us-west-2"
+  APP_ID: "d2vgwrednvfl6a" 
+  # aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  # aws-region: ${{ env.AWS_REGION }}
+
+  # ----------- Config for Unit Testing -----------
+  # PYTHONPATH: "/home/runner/work/artisan-pid-parser/artisan-pid-parser"
+  # DO_NOT_USE_BOTO3_LOGS: true
+  # DO_NOT_USE_ASM: true
+  # # Dummy Secret Key and Auth token
+  # JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+  # AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+on:
+  push:
+    branches: ["main"]
+# permissions:
+#       contents: write
+#       pull-requests: write
+    
+jobs:
+  # ci-pipeline:
+  #   runs-on: [ubuntu-latest]
+    # container: docker://dvcorg/cml-py3:latest
+    # env:
+    #       repo_token: ${{ secrets.REPO_TOKEN }}
+    #       repo_name: ${{ github.event.repository.name }}
+          
+
+    # steps:
+      # - name: Create Zip Deployment Package
+      #   run: zip -r ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} ./ -x *.git*
+
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ env.AWS_REGION }}
+
+      # - name: Copy Deployment Package to AWS S3
+      #   run: aws s3 cp ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} s3://${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}/
+
+      # - name: Completion Message
+      #   run: echo "CI Pipeline completed"
+
+  cd-pipeline:
+    runs-on: ubuntu-latest
+    # needs: [ci-pipeline]
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${AWS_REGION }
+      # - name: Extracting Branch and Tag Names
+      #   id: branch_name
+      #   run: |
+      #     echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+      #     echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+      #     echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+      # - name: Preparing deployment package name
+      #   id: package_name
+      #   run: |
+      #     echo ::set-output name=DEPLOY_PACKAGE_NAME::app-${{steps.branch_name.outputs.SOURCE_TAG}}.zip
+      # - name: Use Deploy Package Name
+      #   run: |
+      #     echo steps.package_name.outputs.DEPLOY_PACKAGE_NAME
+      # - name: Create a new ElasticBeanstalk Application version
+      #   run: |
+      #     aws elasticbeanstalk create-application-version \
+      #     --application-name ${{ env.AMPLIFY_APPLICATION_NAME }} \
+      #     --version-label "Ver-${{ steps.branch_name.outputs.SOURCE_TAG }}" \
+      #     --description "${{ steps.branch_name.outputs.SOURCE_TAG }}" \
+      #     --source-bundle S3Bucket="${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}",S3Key="${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }}"
+      - name: Deploy the new application version
+        run: |
+          aws amplify start-deployment
+          --app-id ${APP_ID}
+          --branch-name manual
+          --source-url s3://${AMPLIFY_PACKAGE_S3_BUCKET_NAME}/{AMPLIFY_PACKAGE_S3_BUCKET_KEY}/build.zip
+      - name: Completion Message
+        run: echo "CD Pipeline completed"
+      # - name: create repo
+      #   env:
+      #     PR_URL: ${{github.event.pull_request.html_url}}
+      #     GITHUB_TOKEN: $repo_token
+      #   run: |          
+      #     git clone "https://$GITHUB_ACTOR:$repo_token@github.com/kethan-drishya/$repo_name.git"
+      #     cd $repo_name
+      #     git config --local user.email "kethan.sarma@drishya.ai"
+      #     git config --local user.name "Kethan Sarma"
+      #     git config --local remote.origin.url  https://$GITHUB_ACTOR:$repo_token@github.com/kethan-drishya/$repo_name.git
+      #     git config --local merge.ours.driver true          
+      #     git fetch --all
+      #     git checkout --track origin/$base_branch_name   
+      #     git checkout -b $head_branch_name       
+      #     git merge origin/$source_branch_name
+      #     git push --set-upstream origin $head_branch_name          
+        
+      # - name: create a PR       
+      #   id: cpr
+      #   uses: actions/github-script@v6
+      #   with:
+      #     script: |
+      #       const { base_branch_name, head_branch_name } = process.env
+      #       const quoted_base_branch_name = `'${base_branch_name}'`
+      #       const quoted_head_branch_name = `'${head_branch_name}'`
+      #       const head_ref = "".concat('heads/', head_branch_name)
+      #       console.log(`${base_branch_name}`, quoted_base_branch_name, head_branch_name)
+      #       const { repo, owner } = context.repo;
+      #       const pull_requests = await github.rest.pulls.list({
+      #         owner,
+      #         repo,
+      #         base: base_branch_name,
+      #         head: head_branch_name,
+      #         state: "open",
+      #         })["catch"](function (e) {
+      #         console.log(e.message);
+      #         });   
+      #       console.log(pull_requests)
+      #       var pull_number = 0    
+      #       if(pull_requests.data.length !=0){
+      #         console.log("in if")
+      #         pull_number = pull_requests.data[0].number 
+      #         console.log(pull_number)
+      #         const result = await github.rest.pulls.update({
+      #         owner,
+      #         repo,
+      #         title: 'new title',
+      #         body: 'updated body',
+      #         pull_number: pull_number
+      #         });
+      #       }
+      #       else{
+      #         console.log("in else")
+      #         const result = await github.rest.pulls.create({
+      #         title: '[Example] Simple demo',
+      #         owner,
+      #         repo,
+      #         base: base_branch_name,
+      #         head: head_branch_name,
+      #         body: [
+      #           'This PR is auto-generated by',
+      #           '[actions/github-script](https://github.com/actions/github-script).'
+      #         ].join('\n')
+      #         });
+      #         github.rest.issues.addLabels({
+      #             owner,
+      #             repo,
+      #             issue_number: result.data.number,
+      #             labels: ['feature', 'automated pr']
+      #           });
+      #         pull_number = result.data.number ;
+      #       };
+      #       const result_merge = await github.rest.pulls.merge({
+      #         owner,
+      #         repo,
+      #         pull_number: pull_number
+      #       });
+      #       console.log(result_merge)
+      #       const delete_branch = await github.rest.git.deleteRef({
+      #         owner,
+      #         repo,
+      #         ref: head_ref
+      #       });
+      #       console.log(delete_branch)
+
+      - name: Cleanup
+        run: |
+          cd ..
+          sudo rm -r -f $repo_name
+
+  
