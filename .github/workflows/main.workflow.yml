@@ -41,7 +41,7 @@ jobs:
           echo ::set-output name=DEPLOY_PACKAGE_NAME::${{steps.branch_name.outputs.SOURCE_TAG}}.zip
     
       - name: Create Zip Deployment Package
-        run: zip -r -j ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} build/ -x *.git*
+        run: cd build && zip -r ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} * -x *.git*
 
 
       - name: Configure AWS Credentials
@@ -53,6 +53,7 @@ jobs:
 
       - name: Copy Deployment Package to AWS S3
         run: |
+          cd build && \
           aws s3 cp ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} s3://${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}
 
       - name: Completion Message
