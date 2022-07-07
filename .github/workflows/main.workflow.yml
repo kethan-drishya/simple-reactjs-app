@@ -68,26 +68,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{env.AWS_REGION }}
-      # - name: Extracting Branch and Tag Names
-      #   id: branch_name
-      #   run: |
-      #     echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-      #     echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-      #     echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
-      # - name: Preparing deployment package name
-      #   id: package_name
-      #   run: |
-      #     echo ::set-output name=DEPLOY_PACKAGE_NAME::app-${{steps.branch_name.outputs.SOURCE_TAG}}.zip
-      # - name: Use Deploy Package Name
-      #   run: |
-      #     echo steps.package_name.outputs.DEPLOY_PACKAGE_NAME
-      # - name: Create a new ElasticBeanstalk Application version
-      #   run: |
-      #     aws elasticbeanstalk create-application-version \
-      #     --application-name ${{ env.AMPLIFY_APPLICATION_NAME }} \
-      #     --version-label "Ver-${{ steps.branch_name.outputs.SOURCE_TAG }}" \
-      #     --description "${{ steps.branch_name.outputs.SOURCE_TAG }}" \
-      #     --source-bundle S3Bucket="${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}",S3Key="${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }}"
+     
       - name: Deploy the new application version
         run: |
           aws amplify start-deployment \
