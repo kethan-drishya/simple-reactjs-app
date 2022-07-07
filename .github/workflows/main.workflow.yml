@@ -89,7 +89,7 @@ jobs:
           aws amplify start-deployment \
             --app-id $APP_ID \
             --branch-name manual \
-            --source-url s3://manual-amplify-deploy/build.zip
+            --source-url https://github.com/kethan-drishya/simple-reactjs-app/blob/main/build.zip
       - name: Completion Message
         run: echo "CD Pipeline completed"
       # - name: create repo
