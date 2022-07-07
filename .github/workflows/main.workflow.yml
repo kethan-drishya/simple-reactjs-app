@@ -27,14 +27,14 @@ jobs:
           node-version: 16
 
       - name: Run Build
-      - run: npm run build --if-present
+        run: npm run build --if-present
 
       - name: Extracting Branch and Tag Names
-      id: branch_name
-      run: |
-        echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
-        echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
-        echo ::set-output name=SOURCE_TAG::$PACKAGE_NAME
+        id: branch_name
+        run: |
+          echo ::set-output name=SOURCE_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-output name=SOURCE_BRANCH::${GITHUB_REF#refs/heads/}
+          echo ::set-output name=SOURCE_TAG::$PACKAGE_NAME
 
       - name: Preparing deployment package name
         id: package_name
