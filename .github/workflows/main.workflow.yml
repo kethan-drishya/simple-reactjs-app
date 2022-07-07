@@ -41,7 +41,8 @@ jobs:
           echo ::set-output name=DEPLOY_PACKAGE_NAME::${{steps.branch_name.outputs.SOURCE_TAG}}.zip
     
       - name: Create Zip Deployment Package
-        run: zip -r ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} build/ -x *.git*
+        run: cd build && zip -r ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} build/ -x *.git*
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -51,7 +52,8 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Copy Deployment Package to AWS S3
-        run: aws s3 cp ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} s3://${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}
+        run: |
+          aws s3 cp ${{ steps.package_name.outputs.DEPLOY_PACKAGE_NAME }} s3://${{ env.AMPLIFY_PACKAGE_S3_BUCKET_NAME }}
 
       - name: Completion Message
         run: echo "CI Pipeline completed"
